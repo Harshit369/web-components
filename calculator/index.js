@@ -49,13 +49,13 @@ const template = `
       <span class="button input">4</span>
       <span class="button input">5</span>
       <span class="button input">6</span>
-      <span class="button operator">C</span>
+      <span id="clear" class="button clear">C</span>
     </div>
     <div class="row">
       <span class="button input">7</span>
       <span class="button input">8</span>
       <span class="button input">9</span>
-      <span class="button equal">=</span>
+      <span id="equal" class="button equal">=</span>
     </div>
     <div class="row">
       <span class="button operator">+</span>
@@ -67,17 +67,24 @@ const template = `
 `;
 
 class Calculator extends HTMLElement {
-  constructor() {
-    this.valueString = '';
-  }
   createdCallback() {
+    this.valueString = '';
     this.createShadowRoot().innerHTML = template;
     this.container = this.shadowRoot.querySelector('#calculator-wrapper');
-    this.shadowRoot.querySelectorAll('.input').onClick((e) => {
-      debugger;
-    });
-    this.operators = this.shadowRoot.querySelectorAll('.operator');
-    this.updateText();
+    this.screen = this.shadowRoot.querySelector('#screen');
+    this.shadowRoot.querySelectorAll('.input, .operator').forEach((button) => {
+      let isValue = button.classList.contains('input');
+      button.onclick = e => {
+        this.updateScreen(e.target.innerText, isValue)
+      };
+    })
+    this.shadowRoot.querySelector('#clear').onclick = e => {
+      this.clearScreen();
+    };
+    this.shadowRoot.querySelector('#equal').onclick = e => {
+      this.evaluateScreen();
+    };
+    this.updateComponents();
   }
 
   attachedCallback() {
@@ -85,12 +92,28 @@ class Calculator extends HTMLElement {
   }
 
   attributeChangedCallback(attrName, oldVal, newVal) {
-    this.updateText();
+    this.updateComponents();
   }
 
-  updateText() {
-    let newVal = this.getAttribute('value');
+  updateComponents() {
+    this.screen.innerHTML = this.valueString;
   }
+
+  updateScreen(string, isValue) {
+    this.valueString += string;
+    this.updateComponents();
+  }
+
+  clearScreen() {
+    this.valueString = this.valueString.slice(0, -1);
+    this.updateComponents();
+  }
+
+  evaluateScreen() {
+    this.valueString = eval(this.valueString);
+    this.updateComponents();
+  }
+
 }
 
 document.registerElement('custom-calculator', Calculator);
